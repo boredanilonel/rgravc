@@ -35,6 +35,11 @@ pipeline {
                 '''
             }
         }
+        stage('Проверка Docker') {
+    steps {
+        sh 'docker --version'
+    }
+}
     }
 
     post {
