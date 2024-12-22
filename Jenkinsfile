@@ -1,50 +1,32 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE_NAME = "my-application"
-        REGISTRY = "my-docker-registry.local"
+        DOCKER_IMAGE = "my-app"
+        DOCKER_CONTAINER = "app"
     }
-
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/boredanilonel/rgravc.git'
             }
         }
-
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
+                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
             }
         }
-
-        stage('Push Docker Image') {
-            steps {
-                sh 'docker tag $IMAGE_NAME:$BUILD_NUMBER $REGISTRY/$IMAGE_NAME:$BUILD_NUMBER'
-                sh 'docker push $REGISTRY/$IMAGE_NAME:$BUILD_NUMBER'
-            }
-        }
-
         stage('Deploy Container') {
             steps {
                 sh '''
-                docker stop $IMAGE_NAME || true
-                docker rm $IMAGE_NAME || true
-                docker run -d --name $IMAGE_NAME -p 80:80 $REGISTRY/$IMAGE_NAME:$BUILD_NUMBER
+                if docker ps -q --filter "name=${DOCKER_CONTAINER}"; then
+                    docker stop ${DOCKER_CONTAINER} && docker rm ${DOCKER_CONTAINER}
+                fi
+                docker run -d --name ${DOCKER_CONTAINER} -p 8081:8081 ${DOCKER_IMAGE}:latest
                 '''
             }
         }
-        stage('Проверка Docker') {
-    steps {
-        sh 'docker --version'
     }
-}
-    }
-
-    post {
-        always {
-            cleanWs()
-        }
+    triggers {
+        pollSCM('H/2 * * * *') // Проверка изменений каждые 2 минуты
     }
 }
