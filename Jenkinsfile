@@ -4,12 +4,20 @@ pipeline {
     environment {
         IMAGE_NAME = "my-application"
         REGISTRY = "my-docker-registry.local"
+        DOCKER_BUILDKIT = '1'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/boredanilonel/rgravc.git'
+            }
+        }
+
+        stage('Debug Workspace') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
             }
         }
 
@@ -35,11 +43,12 @@ pipeline {
                 '''
             }
         }
+
         stage('Проверка Docker') {
-    steps {
-        sh 'docker --version'
-    }
-}
+            steps {
+                sh 'docker --version'
+            }
+        }
     }
 
     post {
